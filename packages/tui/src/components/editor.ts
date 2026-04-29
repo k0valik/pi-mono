@@ -660,6 +660,7 @@ export class Editor implements Component, Focusable {
 					} else if (isDirectory && this.autocompletePrefix.startsWith("@")) {
 						// Re-trigger autocomplete for directory navigation (same as TAB)
 						this.tryTriggerAutocomplete();
+						return;
 					} else {
 						this.cancelAutocomplete();
 						if (this.onChange) this.onChange(this.getText());
