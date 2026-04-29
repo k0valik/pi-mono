@@ -518,7 +518,25 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 	private resolveScopedFuzzyQuery(rawQuery: string): { baseDir: string; query: string; displayBase: string } | null {
 		const normalizedQuery = toDisplayPath(rawQuery);
 		const slashIndex = normalizedQuery.lastIndexOf("/");
+
+		// If no slash, check if the query matches a directory in the base path
 		if (slashIndex === -1) {
+			let baseDir: string;
+			if (normalizedQuery.startsWith("~/")) {
+				baseDir = this.expandHomePath(normalizedQuery);
+			} else if (normalizedQuery.startsWith("/")) {
+				baseDir = normalizedQuery;
+			} else {
+				baseDir = join(this.basePath, normalizedQuery);
+			}
+
+			try {
+				if (statSync(baseDir).isDirectory()) {
+					return { baseDir, query: "", displayBase: `${normalizedQuery}/` };
+				}
+			} catch {
+				// Directory doesn't exist or not accessible
+			}
 			return null;
 		}
 

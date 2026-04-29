@@ -616,10 +616,21 @@ export class Editor implements Component, Focusable {
 						selected,
 						this.autocompletePrefix,
 					);
+					const isDirectory = selected.label.endsWith("/");
 					this.state.lines = result.lines;
 					this.state.cursorLine = result.cursorLine;
 					this.setCursorCol(result.cursorCol);
-					this.cancelAutocomplete();
+
+					// For @ paths that complete to directories, re-trigger autocomplete
+					// For files or non-@ paths, close the dropdown as before
+					if (isDirectory && this.autocompletePrefix.startsWith("@")) {
+						// Re-trigger autocomplete for directory navigation
+						this.tryTriggerAutocomplete();
+					} else {
+						// Close autocomplete for files or non-@ paths
+						this.cancelAutocomplete();
+					}
+
 					if (this.onChange) this.onChange(this.getText());
 				}
 				return;
@@ -641,9 +652,14 @@ export class Editor implements Component, Focusable {
 					this.state.cursorLine = result.cursorLine;
 					this.setCursorCol(result.cursorCol);
 
+					const isDirectory = selected.label.endsWith("/");
+
 					if (this.autocompletePrefix.startsWith("/")) {
 						this.cancelAutocomplete();
 						// Fall through to submit
+					} else if (isDirectory && this.autocompletePrefix.startsWith("@")) {
+						// Re-trigger autocomplete for directory navigation (same as TAB)
+						this.tryTriggerAutocomplete();
 					} else {
 						this.cancelAutocomplete();
 						if (this.onChange) this.onChange(this.getText());
